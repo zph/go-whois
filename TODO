@@ -1,0 +1,3 @@
+Add rudimentary caching based on storing full text in data/ under domain name data/civet.ws
+  - Try reading from there first, fall back to issuing command
+Implement moneta in golang?
