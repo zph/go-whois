@@ -15,7 +15,7 @@ func main() {
         rec := whois.RetrieveJSON(params["domain"])
         return rec
     })
-    m.Get("/whois/email/:domain", func(params martini.Params) string {
+    m.Get("/whois/emails/:domain", func(params martini.Params) string {
         rec, _ := whois.Retrieve(params["domain"])
         return strings.Join(rec.Emails, ", ")
     })
