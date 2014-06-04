@@ -14,6 +14,9 @@ func main() {
         rec := whois.RetrieveJSON(params["domain"])
         return rec
     })
+    m.Get("/favicon.ico", func() (int) {
+        return 418
+    })
     m.NotFound(func() (int, string) {
         return 418, "yolo"
     })
