@@ -21,7 +21,8 @@ type Result struct {
 func Retrieve(query string) (*Result, error) {
     // record := getData("fixtures/civet.com_verisign")
     jwhois := fmt.Sprintf("./whois.sh")
-    cmd := exec.Command(jwhois, query)
+    q := cleanDomain(query)
+    cmd := exec.Command(jwhois, q)
 
     record, e := cmd.Output()
     check(e)
