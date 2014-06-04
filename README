@@ -1,1 +1,21 @@
-Use jwhois?
+# Whois Service API
+
+## Run
+
+./dist/whois_server
+
+## Visit
+
+http://localhost:3000/whois/[DOMAIN TO QUERY INFO]
+
+## TODO
+
+Use whois.c (from debian repos) instead of shelling out
+
+## LICENSE
+
+MIT by Zander Hill and Joe Durson
+
+## Contributing
+
+PRs welcome, branch, commit, submit :)
