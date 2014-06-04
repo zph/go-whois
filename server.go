@@ -10,7 +10,7 @@ func main() {
     m.Get("/", func(params martini.Params) string {
         return "Serving up jwhois data at /:domain"
     })
-    m.Get("/:domain", func(params martini.Params) string {
+    m.Get("/whois/:domain", func(params martini.Params) string {
         rec := whois.RetrieveJSON(params["domain"])
         return rec
     })
