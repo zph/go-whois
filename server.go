@@ -2,15 +2,16 @@ package main
 
 import (
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/binding"
 	"github.com/martini-contrib/render"
 	"github.com/zph/go-whois/whois"
-	"github.com/martini-contrib/binding"
 	"mime/multipart"
 	"strings"
+	"sync"
 )
 
 type UploadForm struct {
-    FileUpload  *multipart.FileHeader `form:"domains"`
+	FileUpload *multipart.FileHeader `form:"domains"`
 }
 
 func main() {
@@ -30,23 +31,27 @@ func main() {
 		file, _ := uf.FileUpload.Open()
 		lines := whois.ParseCSV(file)
 		count := len(lines)
-		
+
 		messages := make(chan string, count)
-		done     := make(chan bool, count)
+
+		var wg sync.WaitGroup
 
 		for _, line := range lines {
-			whois.AsyncRetrieve(line[0], messages, done)
+			wg.Add(1)
+			go whois.AsyncRetrieve(line[0], messages, &wg)
 		}
 
-		<-done
-		close(messages)
-		
+		go func() {
+			wg.Wait()
+			close(messages)
+		}()
+
 		msgs := make([]string, 0)
 		for elem := range messages {
 			msgs = append(msgs, elem)
 		}
 		return strings.Join(msgs, "\n")
-    })
+	})
 
 	m.Get("/whois/:domain", func(params martini.Params) string {
 		rec := whois.RetrieveJSON(params["domain"])
