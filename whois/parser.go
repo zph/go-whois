@@ -53,10 +53,14 @@ func Retrieve(query string) (*Result, error) {
 }
 
 func AsyncRetrieve(domain string, messages chan<- string, wg *sync.WaitGroup) {
-	rec, _ := Retrieve(domain)
-	emails := strings.Join(rec.Emails, " ")
-	output := strings.Join([]string{domain, emails}, ", ")
-	messages <- output
+	rec, err := Retrieve(domain)
+	if err == nil {
+		emails := strings.Join(rec.Emails, " ")
+		output := strings.Join([]string{domain, emails}, ", ")
+		messages <- output
+	} else {
+		fmt.Println(err)
+	}
 	wg.Done()
 }
 
