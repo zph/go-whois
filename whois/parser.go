@@ -34,12 +34,19 @@ func Retrieve(query string) (*Result, error) {
 	cmd := exec.Command(jwhois, q)
 
 	record, e := cmd.Output()
-	check(e)
-
-	sRecord := strings.TrimSpace(string(record))
-	lines := strings.Split(sRecord, "\n")
-	ourMap := toMap(lines)
-	emailArray := emails(sRecord)
+	var sRecord string
+	var ourMap map[string]string
+	var emailArray []string
+	if e != nil {
+		sRecord = ""
+		ourMap  = make(map [string]string)
+		emailArray = []string{}
+	} else {
+		sRecord = strings.TrimSpace(string(record))
+		lines   := strings.Split(sRecord, "\n")
+		ourMap  = toMap(lines)
+		emailArray = emails(sRecord)
+	}
 
 	result := &Result{
 		Emails: emailArray,
