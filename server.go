@@ -28,18 +28,24 @@ func main() {
 
 	m.Post("/whois/upload/csv", binding.MultipartForm(UploadForm{}), func(uf UploadForm) string {
 		file, _ := uf.FileUpload.Open()
-		cont := whois.ParseCSV(file)
+		lines := whois.ParseCSV(file)
+		count := len(lines)
 		
+		messages := make(chan string, count)
+		done     := make(chan bool, count)
 
-		result := make([]string, 0)
-		for _, line := range cont {
-			rec, _ := whois.Retrieve(line[0])
-			emails := strings.Join(rec.Emails, " ")
-			output := strings.Join([]string{line[0], emails}, ", ")
-			result = append(result, output)
-		
+		for _, line := range lines {
+			whois.AsyncRetrieve(line[0], messages, done)
 		}
-		return strings.Join(result, "\n")
+
+		<-done
+		close(messages)
+		
+		msgs := make([]string, 0)
+		for elem := range messages {
+			msgs = append(msgs, elem)
+		}
+		return strings.Join(msgs, "\n")
     })
 
 	m.Get("/whois/:domain", func(params martini.Params) string {

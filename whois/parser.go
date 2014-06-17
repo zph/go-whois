@@ -59,6 +59,15 @@ func Retrieve(query string) (*Result, error) {
     return result, nil
 }
 
+
+func AsyncRetrieve(domain string, messages chan<- string, done chan<- bool){
+	rec, _ := Retrieve(domain)
+	emails := strings.Join(rec.Emails, " ")
+	output := strings.Join([]string{domain, emails}, ", ")
+	messages <- output
+	done <- true
+}
+
 func RetrieveJSON(query string) string {
     record, err := Retrieve(query)
     check(err)
