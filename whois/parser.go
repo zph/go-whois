@@ -10,12 +10,24 @@ import (
     "regexp"
     "strings"
     "encoding/json"
+	"encoding/csv"
+	"io"
 )
 
 type Result struct {
     Emails []string          `json:"emails"`
     Data   map[string]string `json:"data"`
     Raw    string            `json:"raw"`
+}
+
+func ParseCSV (f io.Reader) [][]string {
+	// f, _ := os.Open("sample.csv")
+	// defer f.Close()
+
+	csvReader := csv.NewReader(f)
+	cont, _   := csvReader.ReadAll()
+	fmt.Printf("Content: %#v", cont)
+	return cont
 }
 
 func Retrieve(query string) (*Result, error) {
