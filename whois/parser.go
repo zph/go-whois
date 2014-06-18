@@ -1,8 +1,9 @@
 package whois
 
+// #include <whois.c>
+
 import (
-	// "github.com/codegangsta/cli"
-	// "bytes"
+	"C"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -24,7 +25,6 @@ type Result struct {
 func ParseCSV(f io.Reader) [][]string {
 	csvReader := csv.NewReader(f)
 	cont, _ := csvReader.ReadAll()
-	fmt.Printf("Content: %#v", cont)
 	return cont
 }
 
@@ -39,12 +39,12 @@ func Retrieve(query string) (*Result, error) {
 	var emailArray []string
 	if e != nil {
 		sRecord = ""
-		ourMap  = make(map [string]string)
+		ourMap = make(map[string]string)
 		emailArray = []string{}
 	} else {
 		sRecord = strings.TrimSpace(string(record))
-		lines   := strings.Split(sRecord, "\n")
-		ourMap  = toMap(lines)
+		lines := strings.Split(sRecord, "\n")
+		ourMap = toMap(lines)
 		emailArray = emails(sRecord)
 	}
 
@@ -53,8 +53,6 @@ func Retrieve(query string) (*Result, error) {
 		Data:   ourMap,
 		Raw:    sRecord,
 	}
-
-	fmt.Printf("STRUCT: %#v", result)
 
 	return result, nil
 }
@@ -88,7 +86,6 @@ func emails(rawRecord string) []string {
 
 	if len(emails) == 0 {
 		emails = grepEmails(rawRecord)
-		fmt.Printf("slice - %#v\n", emails)
 	}
 
 	return emails
@@ -101,8 +98,6 @@ func grepEmails(c string) []string {
 }
 
 func getEmails(h map[string]string) []string {
-
-	fmt.Printf("emails - %#v\n", h)
 	s := make([]string, 0)
 	for k, v := range h {
 		match, _ := regexp.MatchString("email", k)
