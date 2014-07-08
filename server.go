@@ -6,6 +6,7 @@ import (
 	"github.com/martini-contrib/render"
 	"github.com/zph/go-whois/whois"
 	"mime/multipart"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -18,6 +19,7 @@ func main() {
 
 	m := martini.Classic()
 	m.Use(render.Renderer())
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	m.Get("/", func(params martini.Params) string {
 		return "Serving up jwhois data at /:domain"

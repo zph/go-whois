@@ -1,8 +1,6 @@
 package whois
 
 import (
-	// "github.com/codegangsta/cli"
-	// "bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -39,12 +37,12 @@ func Retrieve(query string) (*Result, error) {
 	var emailArray []string
 	if e != nil {
 		sRecord = ""
-		ourMap  = make(map [string]string)
+		ourMap = make(map[string]string)
 		emailArray = []string{}
 	} else {
 		sRecord = strings.TrimSpace(string(record))
-		lines   := strings.Split(sRecord, "\n")
-		ourMap  = toMap(lines)
+		lines := strings.Split(sRecord, "\n")
+		ourMap = toMap(lines)
 		emailArray = emails(sRecord)
 	}
 
