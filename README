@@ -1,12 +1,17 @@
 # Whois Service API
 
-## Run
-
-./dist/whois_server
-
 ## Visit
 
 http://localhost:3000/whois/[DOMAIN TO QUERY INFO]
+
+You may also visit
+http://localhost:3000/whois/upload/csv
+to upload a csv file with all the domains you wish to use.
+
+## Storage
+When provided with a valid domain name, go-whois will query the local sqlite db for that domain.
+If data is found, then go-whois will return that data. If the domain is not present in the database,
+then go-whois will execute a fresh whois query and store the results in the db.
 
 ## TODO
 
@@ -14,7 +19,7 @@ Use whois.c (from debian repos) instead of shelling out
 
 ## LICENSE
 
-MIT by Zander Hill and Joe Durson
+MIT by Zander Hill and Joe Dursun
 
 ## Contributing
 
