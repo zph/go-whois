@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"github.com/coopernurse/gorp"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,6 +18,13 @@ type Result struct {
 	Emails []string          `json:"emails"`
 	Data   map[string]string `json:"data"`
 	Raw    string            `json:"raw"`
+	Domain string
+}
+
+type SqlResult struct {
+	Domain string
+	Raw    string
+	Emails string
 }
 
 func ParseCSV(f io.Reader) [][]string {
@@ -26,39 +34,70 @@ func ParseCSV(f io.Reader) [][]string {
 	return cont
 }
 
-func Retrieve(query string) (*Result, error) {
-	jwhois := fmt.Sprintf("./whois.sh")
+func Retrieve(query string, db *gorp.DbMap) (*Result, error) {
 	q := cleanDomain(query)
-	cmd := exec.Command(jwhois, q)
+	data := []SqlResult{}
+	_, err := db.Select(&data, "select * from WhoisResults where Domain=?", q)
+	var result Result
 
-	record, e := cmd.Output()
-	var sRecord string
-	var ourMap map[string]string
-	var emailArray []string
-	if e != nil {
-		sRecord = ""
-		ourMap = make(map[string]string)
-		emailArray = []string{}
+	if len(data) == 0 || err != nil {
+		fmt.Println(q, " not found in database")
+		jwhois := fmt.Sprintf("./whois.sh")
+		cmd := exec.Command(jwhois, q)
+
+		record, err := cmd.Output()
+		sRecord := strings.TrimSpace(string(record))
+
+		if err != nil {
+			result = Result{
+				Emails: []string{},
+				Data:   make(map[string]string),
+				Raw:    "",
+				Domain: q,
+			}
+		} else {
+			result = newResult(sRecord, q)
+		}
+		emailString := strings.Join(result.Emails, ", ")
+		dbResult := SqlResult{Domain: result.Domain, Raw: result.Raw, Emails: emailString}
+		err = db.Insert(&dbResult)
 	} else {
-		sRecord = strings.TrimSpace(string(record))
-		lines := strings.Split(sRecord, "\n")
-		ourMap = toMap(lines)
-		emailArray = emails(sRecord)
+		result = newDBResult(data[0])
 	}
 
-	result := &Result{
+	return &result, err
+}
+
+func newDBResult(record SqlResult) Result {
+	lines := strings.Split(record.Emails, "\n")
+	ourMap := toMap(lines)
+	emailArray := strings.Split(record.Emails, ", ")
+
+	result := Result{
+		Emails: emailArray,
+		Data:   ourMap,
+		Raw:    record.Raw,
+		Domain: record.Domain,
+	}
+	return result
+}
+
+func newResult(sRecord string, query string) Result {
+	lines := strings.Split(sRecord, "\n")
+	ourMap := toMap(lines)
+	emailArray := emails(sRecord)
+
+	result := Result{
 		Emails: emailArray,
 		Data:   ourMap,
 		Raw:    sRecord,
+		Domain: query,
 	}
-
-	fmt.Printf("STRUCT: %#v", result)
-
-	return result, nil
+	return result
 }
 
-func AsyncRetrieve(domain string, messages chan<- string, wg *sync.WaitGroup) {
-	rec, err := Retrieve(domain)
+func AsyncRetrieve(domain string, db *gorp.DbMap, messages chan<- string, wg *sync.WaitGroup) {
+	rec, err := Retrieve(domain, db)
 	if err == nil {
 		emails := strings.Join(rec.Emails, " ")
 		output := strings.Join([]string{domain, emails}, ", ")
@@ -69,8 +108,8 @@ func AsyncRetrieve(domain string, messages chan<- string, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func RetrieveJSON(query string) string {
-	record, err := Retrieve(query)
+func RetrieveJSON(query string, db *gorp.DbMap) string {
+	record, err := Retrieve(query, db)
 	check(err)
 
 	js, _ := json.Marshal(&record)
@@ -79,9 +118,7 @@ func RetrieveJSON(query string) string {
 
 func emails(rawRecord string) []string {
 	lines := strings.Split(rawRecord, "\n")
-
 	hash := toMap(lines)
-
 	emails := getEmails(hash)
 
 	if len(emails) == 0 {
